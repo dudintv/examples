@@ -38,31 +38,31 @@ async function seed() {
   };
 }
 export default defineEventHandler(async () => {
-	const startTime = Date.now();
-	const db = createPool();
-  try {
-		const { rows: users } = await db.query('SELECT * FROM users');
-		const duration = Date.now() - startTime;
+  const startTime = Date.now();
+  const db = createPool();
+
+  const getUsers = async () => {
+    const { rows: users } = await db.query('SELECT * FROM users');
+    const duration = Date.now() - startTime;
     return {
-      users: users,
-      duration: duration
+      users,
+      duration
     };
-	} catch (error) {
-		// @ts-ignore
-		if (error?.message === `relation "users" does not exist`) {
+  }
+
+  try {
+    return await getUsers();
+  } catch (error) {
+    // @ts-ignore
+    if (error?.message === `relation "users" does not exist`) {
       console.log(
         "Table does not exist, creating and seeding it with dummy data now..."
       );
       // Table is not created yet
       await seed();
-      const { rows: users } = await db.query('SELECT * FROM users');
-      const duration = Date.now() - startTime;
-      return {
-        users: users,
-        duration: duration
-      };
+      return await getUsers();
     } else {
       throw error;
     }
-	}
+  }
 });
